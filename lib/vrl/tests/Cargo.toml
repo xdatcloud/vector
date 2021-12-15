@@ -8,6 +8,7 @@ publish = false
 [dependencies]
 enrichment = { path = "../../enrichment" }
 parser = { package = "vrl-parser", path = "../parser" }
+snmalloc-rs = { version = "0.2" }
 stdlib = { package = "vrl-stdlib", path = "../stdlib" }
 vector_common = { path = "../../vector-common", default-features = false }
 vrl = { path = "../vrl" }
