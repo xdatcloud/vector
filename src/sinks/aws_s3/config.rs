@@ -7,7 +7,9 @@ use vector_core::sink::VectorSink;
 
 use super::sink::S3RequestOptions;
 use crate::aws::{AwsAuthentication, RegionOrEndpoint};
+use crate::sinks::util::encoding::EncodingConfigAdapter;
 use crate::{
+    codecs::Encoder,
     config::{AcknowledgementsConfig, GenerateConfig, Input, ProxyConfig, SinkConfig, SinkContext},
     sinks::{
         s3_common::{
@@ -17,7 +19,7 @@ use crate::{
             sink::S3Sink,
         },
         util::{
-            encoding::{EncodingConfig, StandardEncodings},
+            encoding::{EncodingConfig, StandardEncodings, StandardEncodingsMigrator},
             partitioner::KeyPartitioner,
             BatchConfig, BulkSizeBasedDefaultBatchSettings, Compression, ServiceBuilderExt,
             TowerRequestConfig,
@@ -32,7 +34,6 @@ const DEFAULT_FILENAME_TIME_FORMAT: &str = "%s";
 const DEFAULT_FILENAME_APPEND_UUID: bool = true;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
-#[serde(deny_unknown_fields)]
 pub struct S3SinkConfig {
     pub bucket: String,
     pub key_prefix: Option<String>,
@@ -43,7 +44,9 @@ pub struct S3SinkConfig {
     pub options: S3Options,
     #[serde(flatten)]
     pub region: RegionOrEndpoint,
-    pub encoding: EncodingConfig<StandardEncodings>,
+    #[serde(flatten)]
+    pub encoding:
+        EncodingConfigAdapter<EncodingConfig<StandardEncodings>, StandardEncodingsMigrator>,
     #[serde(default = "Compression::gzip_default")]
     pub compression: Compression,
     #[serde(default)]
@@ -71,7 +74,7 @@ impl GenerateConfig for S3SinkConfig {
             filename_extension: None,
             options: S3Options::default(),
             region: RegionOrEndpoint::default(),
-            encoding: StandardEncodings::Text.into(),
+            encoding: EncodingConfig::from(StandardEncodings::Text).into(),
             compression: Compression::gzip_default(),
             batch: BatchConfig::default(),
             request: TowerRequestConfig::default(),
@@ -141,13 +144,17 @@ impl S3SinkConfig {
             .filename_append_uuid
             .unwrap_or(DEFAULT_FILENAME_APPEND_UUID);
 
+        let transformer = self.encoding.transformer();
+        let serializer = self.encoding.clone().encoding();
+        let encoder = Encoder::<()>::new(serializer);
+
         let request_options = S3RequestOptions {
             bucket: self.bucket.clone(),
             api_options: self.options.clone(),
             filename_extension: self.filename_extension.clone(),
             filename_time_format,
             filename_append_uuid,
-            encoding: self.encoding.clone(),
+            encoder: (transformer, encoder),
             compression: self.compression,
         };
 
