@@ -631,7 +631,7 @@ sinks-metrics = [
   "sinks-splunk_hec"
 ]
 
-sinks-aws_cloudwatch_logs = ["aws-core", "aws-sdk-cloudwatchlogs"]
+sinks-aws_cloudwatch_logs = ["aws-core", "aws-sdk-cloudwatchlogs", "codecs"]
 sinks-aws_cloudwatch_metrics = ["aws-core", "aws-sdk-cloudwatch"]
 sinks-aws_kinesis_firehose = ["aws-core", "aws-sdk-firehose"]
 sinks-aws_kinesis_streams = ["aws-core", "aws-sdk-kinesis"]
