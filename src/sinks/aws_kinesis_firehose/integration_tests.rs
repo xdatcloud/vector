@@ -50,7 +50,7 @@ async fn firehose_put_records() {
     let config = KinesisFirehoseSinkConfig {
         stream_name: stream.clone(),
         region: RegionOrEndpoint::with_both("localstack", kinesis_address().as_str()),
-        encoding: EncodingConfig::from(StandardEncodings::Json), // required for ES destination w/ localstack
+        encoding: EncodingConfig::from(StandardEncodings::Json).into(), // required for ES destination w/ localstack
         compression: Compression::None,
         batch,
         request: TowerRequestConfig {
