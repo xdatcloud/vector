@@ -202,6 +202,18 @@ pub enum Serializer {
     RawMessage(RawMessageSerializer),
 }
 
+impl From<JsonSerializer> for Serializer {
+    fn from(serializer: JsonSerializer) -> Self {
+        Self::Json(serializer)
+    }
+}
+
+impl From<RawMessageSerializer> for Serializer {
+    fn from(serializer: RawMessageSerializer) -> Self {
+        Self::RawMessage(serializer)
+    }
+}
+
 impl tokio_util::codec::Encoder<Event> for Serializer {
     type Error = vector_core::Error;
 
