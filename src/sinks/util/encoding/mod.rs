@@ -131,6 +131,19 @@ impl Encoder<Vec<Event>> for (Transformer, crate::codecs::Encoder<()>) {
     }
 }
 
+#[cfg(feature = "codecs")]
+impl Encoder<Event> for (Transformer, crate::codecs::Encoder<()>) {
+    fn encode_input(&self, mut event: Event, writer: &mut dyn io::Write) -> io::Result<usize> {
+        let mut encoder = self.1.clone();
+        self.0.transform(&mut event);
+        let mut bytes = BytesMut::new();
+        encoder
+            .encode(event, &mut bytes)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        writer.write(&bytes)
+    }
+}
+
 /// The behavior of a encoding configuration.
 pub trait EncodingConfiguration {
     type Codec;
