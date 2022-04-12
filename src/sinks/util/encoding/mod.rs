@@ -64,9 +64,15 @@ mod config;
 mod fixed;
 mod with_default;
 
-use std::{fmt::Debug, io, sync::Arc};
+use std::{fmt::Debug, io};
 
+#[cfg(feature = "codecs")]
+use bytes::BytesMut;
+#[cfg(feature = "codecs")]
+use codecs::encoding::Framer;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "codecs")]
+use tokio_util::codec::Encoder as _;
 
 use crate::{
     event::{Event, LogEvent, MaybeAsLogMut, Value},
@@ -106,12 +112,84 @@ pub trait Encoder<T> {
     }
 }
 
-impl<E, T> Encoder<T> for Arc<E>
-where
-    E: Encoder<T>,
-{
-    fn encode_input(&self, input: T, writer: &mut dyn io::Write) -> io::Result<usize> {
-        (**self).encode_input(input, writer)
+#[cfg(feature = "codecs")]
+impl Encoder<Vec<Event>> for (Transformer, crate::codecs::Encoder<()>) {
+    fn encode_input(&self, events: Vec<Event>, writer: &mut dyn io::Write) -> io::Result<usize> {
+        let mut encoder = self.1.clone();
+        let mut bytes_written = match encoder.serializer() {
+            codecs::encoding::Serializer::Json(_) => writer.write(b"[")?,
+            codecs::encoding::Serializer::RawMessage(_) => 0,
+        };
+
+        bytes_written += events
+            .into_iter()
+            .map(|mut event| {
+                self.0.transform(&mut event);
+                let mut bytes = BytesMut::new();
+                encoder
+                    .encode(event, &mut bytes)
+                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+                Ok(writer.write(&bytes)?
+                    + match encoder.serializer() {
+                        codecs::encoding::Serializer::Json(_) => writer.write(b",")?,
+                        codecs::encoding::Serializer::RawMessage(_) => writer.write(b"\n")?,
+                    })
+            })
+            .collect::<io::Result<Vec<_>>>()?
+            .into_iter()
+            .sum::<usize>();
+
+        bytes_written += match encoder.serializer() {
+            codecs::encoding::Serializer::Json(_) => writer.write(b"]")?,
+            codecs::encoding::Serializer::RawMessage(_) => 0,
+        };
+
+        Ok(bytes_written)
+    }
+}
+
+#[cfg(feature = "codecs")]
+impl Encoder<Vec<Event>> for (Transformer, crate::codecs::Encoder<Framer>) {
+    fn encode_input(&self, events: Vec<Event>, writer: &mut dyn io::Write) -> io::Result<usize> {
+        let mut encoder = self.1.clone();
+        let mut bytes_written = match encoder.serializer() {
+            codecs::encoding::Serializer::Json(_) => writer.write(b"[")?,
+            codecs::encoding::Serializer::RawMessage(_) => 0,
+        };
+
+        bytes_written += events
+            .into_iter()
+            .map(|mut event| {
+                self.0.transform(&mut event);
+                let mut bytes = BytesMut::new();
+                encoder
+                    .encode(event, &mut bytes)
+                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+                writer.write(&bytes)
+            })
+            .collect::<io::Result<Vec<_>>>()?
+            .into_iter()
+            .sum::<usize>();
+
+        bytes_written += match encoder.serializer() {
+            codecs::encoding::Serializer::Json(_) => writer.write(b"]")?,
+            codecs::encoding::Serializer::RawMessage(_) => 0,
+        };
+
+        Ok(bytes_written)
+    }
+}
+
+#[cfg(feature = "codecs")]
+impl Encoder<Event> for (Transformer, crate::codecs::Encoder<()>) {
+    fn encode_input(&self, mut event: Event, writer: &mut dyn io::Write) -> io::Result<usize> {
+        let mut encoder = self.1.clone();
+        self.0.transform(&mut event);
+        let mut bytes = BytesMut::new();
+        encoder
+            .encode(event, &mut bytes)
+            .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+        writer.write(&bytes)
     }
 }
 
