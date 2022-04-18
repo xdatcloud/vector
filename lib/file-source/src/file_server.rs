@@ -1,10 +1,10 @@
 use std::{
     cmp,
-    collections::{BTreeMap, HashSet},
+    collections::{BTreeMap, HashSet, HashMap},
     fs::{self, remove_file},
     path::PathBuf,
     sync::Arc,
-    time::{self, Duration},
+    time::{self, Duration, Instant},
 };
 
 use bytes::Bytes;
@@ -161,6 +161,8 @@ where
                 .ok();
             }
         });
+
+        let mut disappeared = HashMap::new();
 
         // Alright friends, how does this work?
         //
@@ -322,6 +324,26 @@ where
                     true
                 }
             });
+
+            let mut disappeared_this_cycle = HashSet::new();
+            fp_map.retain(|file_id: &FileFingerprint, watcher: &mut FileWatcher| {
+                if !watcher.file_findable() {
+                    let file_id = *file_id;
+                    let instant = disappeared.entry(file_id).or_insert_with(Instant::now);
+                    if instant.elapsed() > Duration::from_secs(300) {
+                        self.emitter.emit_file_expired(&watcher.path);
+                        checkpoints.set_dead(file_id);
+                        false
+                    } else {
+                        disappeared_this_cycle.insert(file_id);
+                        true
+                    }
+                } else {
+                    true
+                }
+            });
+            disappeared.retain(|file_id, _| disappeared_this_cycle.contains(file_id));
+
             self.emitter.emit_files_open(fp_map.len());
 
             let start = time::Instant::now();

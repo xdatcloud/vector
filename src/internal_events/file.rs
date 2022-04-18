@@ -214,6 +214,27 @@ mod source {
     }
 
     #[derive(Debug)]
+    pub struct FileExpired<'a> {
+        pub file: &'a Path,
+    }
+
+    impl<'a> InternalEvent for FileExpired<'a> {
+        fn emit_logs(&self) {
+            info!(
+                message = "File expired.",
+                file = %self.file.display(),
+            );
+        }
+
+        fn emit_metrics(&self) {
+            counter!(
+                "files_expired_total", 1,
+                "file" => self.file.to_string_lossy().into_owned(),
+            );
+        }
+    }
+
+    #[derive(Debug)]
     pub struct FileUnwatched<'a> {
         pub file: &'a Path,
     }
@@ -406,6 +427,10 @@ mod source {
 
         fn emit_file_unwatched(&self, file: &Path) {
             emit!(&FileUnwatched { file });
+        }
+
+        fn emit_file_expired(&self, file: &Path) {
+            emit!(&FileExpired { file });
         }
 
         fn emit_file_deleted(&self, file: &Path) {
