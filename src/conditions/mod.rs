@@ -4,8 +4,8 @@ use crate::{config::component::ComponentDescription, event::Event};
 
 mod check_fields;
 pub(self) mod datadog_search;
-pub(crate) mod is_log;
-pub(crate) mod is_metric;
+pub mod is_log;
+pub mod is_metric;
 pub mod not;
 mod vrl;
 
@@ -27,17 +27,17 @@ pub enum Condition {
 }
 
 impl Condition {
-    pub(crate) const fn is_log() -> Self {
+    pub const fn is_log() -> Self {
         Self::IsLog(is_log::IsLog {})
     }
 
-    pub(crate) const fn is_metric() -> Self {
+    pub const fn is_metric() -> Self {
         Self::IsMetric(is_metric::IsMetric {})
     }
 }
 
 impl Condition {
-    pub(crate) fn check(&self, e: &Event) -> bool {
+    pub fn check(&self, e: &Event) -> bool {
         match self {
             Condition::IsLog(x) => x.check(e),
             Condition::IsMetric(x) => x.check(e),
@@ -53,7 +53,7 @@ impl Condition {
 
     /// Provides context for a failure. This is potentially mildly expensive if
     /// it involves string building and so should be avoided in hot paths.
-    pub(crate) fn check_with_context(&self, e: &Event) -> Result<(), String> {
+    pub fn check_with_context(&self, e: &Event) -> Result<(), String> {
         match self {
             Condition::IsLog(x) => x.check_with_context(e),
             Condition::IsMetric(x) => x.check_with_context(e),

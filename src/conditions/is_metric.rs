@@ -8,7 +8,7 @@ use crate::{
 //------------------------------------------------------------------------------
 
 #[derive(Deserialize, Serialize, Debug, Default, Clone)]
-pub(crate) struct IsMetricConfig {}
+pub struct IsMetricConfig {}
 
 inventory::submit! {
     ConditionDescription::new::<IsMetricConfig>("is_metric")
