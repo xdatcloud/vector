@@ -319,7 +319,7 @@ impl Source {
         let pod_store_w = reflector::store::Writer::default();
         let pod_state = pod_store_w.as_reader();
 
-        tokio::spawn(custom_reflector(pod_store_w, pod_watcher, delay_deletion));
+        let pod_reflector_handle = tokio::spawn(custom_reflector(pod_store_w, pod_watcher, delay_deletion));
 
         // -----------------------------------------------------------------
 
@@ -328,7 +328,7 @@ impl Source {
         let ns_store_w = reflector::store::Writer::default();
         let ns_state = ns_store_w.as_reader();
 
-        tokio::spawn(custom_reflector(ns_store_w, ns_watcher, delay_deletion));
+        let ns_reflector_handle = tokio::spawn(custom_reflector(ns_store_w, ns_watcher, delay_deletion));
 
         let paths_provider =
             K8sPathsProvider::new(pod_state.clone(), ns_state.clone(), exclude_paths);
@@ -483,6 +483,8 @@ impl Source {
         }
 
         lifecycle.run(global_shutdown).await;
+        pod_reflector_handle.abort();
+        ns_reflector_handle.abort();
         info!(message = "Done.");
         Ok(())
     }

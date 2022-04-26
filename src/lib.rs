@@ -1,5 +1,5 @@
 #![recursion_limit = "256"] // for async-stream
-#![deny(unreachable_pub)]
+#![allow(unreachable_pub)]
 #![deny(unused_extern_crates)]
 #![deny(unused_allocation)]
 #![deny(unused_assignments)]
