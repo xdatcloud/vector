@@ -111,13 +111,13 @@ fn main() {
             .compile_with_config(
                 prost_build,
                 &[
-                    "lib/vector-core/proto/event.proto",
+                    "proto/event.proto",
                     "proto/vector.proto",
                     "proto/dnstap.proto",
                     "proto/ddsketch.proto",
                     "proto/dd_trace.proto",
                 ],
-                &["proto/", "lib/vector-core/proto/"],
+                &["proto/"],
             )
             .unwrap();
     }
