@@ -147,8 +147,8 @@ pub struct RootOpts {
     pub color: Color,
 
     /// Watch for changes in configuration file, and reload accordingly.
-    #[clap(short, long, env = "VECTOR_WATCH_CONFIG")]
-    pub watch_config: bool,
+    #[clap(short, long, default_value = "false", env = "VECTOR_WATCH_CONFIG")]
+    pub watch_config: String,
 }
 
 impl RootOpts {

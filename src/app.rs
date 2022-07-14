@@ -120,7 +120,7 @@ impl Application {
 
         let config = {
             let config_paths = root_opts.config_paths_with_formats();
-            let watch_config = root_opts.watch_config;
+            let watch_config = root_opts.watch_config.to_lowercase() == "true";
             let require_healthy = root_opts.require_healthy;
 
             rt.block_on(async move {
