@@ -164,7 +164,6 @@ impl ReduceState {
                 }
             }
         }
-        self.stale_since = Instant::now();
     }
 
     fn flush(mut self) -> LogEvent {
