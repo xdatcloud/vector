@@ -403,7 +403,7 @@ fn handle(
 
             response.headers_mut().insert(
                 "Content-Type",
-                HeaderValue::from_static("text/plain; version=0.0.4"),
+                HeaderValue::from_static("text/plain; charset=utf-8; version=0.0.4"),
             );
 
             bytes_sent.emit(ByteSize(body_size));
