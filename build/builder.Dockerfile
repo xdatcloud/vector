@@ -15,16 +15,13 @@ ENV CARGO_TERM_PROGRESS_WIDTH=80
 ENV GIT_CURL_VERBOSE=1
 ENV GIT_TRACE=1
 
-ENV RUSTUP_DIST_SERVER=https://mirrors.ustc.edu.cn/rust-static
-ENV RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
-
 ENV VECTOR_BUILD_DESC=${VECTOR_BUILD_DESC}
 
 RUN bash /source/build/bootstrap-ubuntu.sh && cargo build --release
 
 FROM debian:bullseye-slim as runtime
 
-RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list && apt-get update && apt-get install -y ca-certificates tzdata systemd && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y ca-certificates tzdata systemd && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /source
 

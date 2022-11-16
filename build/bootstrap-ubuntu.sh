@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
-
 apt-get update
 
 apt-get install -y \
@@ -22,11 +20,3 @@ apt-get update
 apt-get install -y \
   libclang1-9 \
   llvm-9
-
-cat <<-EOF > "$CARGO_HOME"/config.toml
-[source.crates-io]
-replace-with = "tuna"
-
-[source.tuna]
-registry = "https://mirrors.tuna.tsinghua.edu.cn/git/crates.io-index.git"
-EOF
