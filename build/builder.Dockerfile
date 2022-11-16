@@ -20,7 +20,7 @@ ENV RUSTUP_UPDATE_ROOT=https://mirrors.ustc.edu.cn/rust-static/rustup
 
 ENV VECTOR_BUILD_DESC=${VECTOR_BUILD_DESC}
 
-RUN bash /source/build/bootstrap-ubuntu.sh && bash cargo build --release
+RUN bash /source/build/bootstrap-ubuntu.sh && cargo build --release
 
 FROM debian:bullseye-slim as runtime
 
